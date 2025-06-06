@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="js/tailwindcss.js"></script>
+    <script src="js/alpine.js" defer></script>
+</head>
+<body>
+    <section x-data="{
+        countries: [],
+        async download(){
+            let response = await fetch('http://localhost:3000/countries')
+            this.countries = await response.json()
+            console.log(this.countries)
+        },
+        async addCountry(){
+            id = Date.now()
+            let response = await fetch('http://localhost:3000/countries',{
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    'name': new FormData($refs.add).get('name'),
+                    'capital': new FormData($refs.add).get('capital')
+                    })
+            })
+            response = await response.json()
+            console.log(response)
+        },
+        async deleteCountry(id){
+            let response = await fetch(`http://localhost:3000/countries/${id}`,{
+                method: 'DELETE',
+        })
+        response = await response.json()
+        console.log(response)
+        this.download()
+    }
+    }"
+    class="px-[6%] grid gap-y-4"
+    >
+        <h1 class="text-3xl font-bold">Countries</h1>
+            <button x-on:click="download()" class="py-2 px-4 bg-cyan-500 text-white rounded cursor-pointer">Download</button>
+            <form
+            x-ref="add"
+            enctype="multipart/form-data"
+             class="border border-gray-400 p-4 grid gap-x-4 grid-cols-4" x-on:submit.prevent="addCountry()">
+                <input type="text" placeholder="country" name="name" class="border-b border-b-gray-400 p-1 bg-cyan-50">
+                <input type="text" placeholder="capital" name="capital" class="border-b border-b-gray-400 p-1 bg-cyan-50">
+                <input type="file" name="flag">
+                <button type="submit" class="py-2 px-12 bg-cyan-500 text-white rounded cursor-pointer">AddCountry</button>
+            </form>
+        <ul>
+            <li class="grid grid-cols-5">
+                <h3>Flag</h3>
+                <h3>ID</h3>
+                <h3>Name country</h3>
+                <h3>Capital</h3>
+                <h3>Delete</h3>
+            </li>
+            <template x-for="country in countries">
+                <li class="grid grid-cols-5">
+                <img x-bind:src="country.img" alt="">  
+                <span x-text="country.id"></span>
+                <span x-text="country.name"></span>
+                <span x-text="country.capital"></span>
+                <button
+                x-on:click="deleteCountry(country.id)"
+                class="bg-cyan-500 py-2 border-2 border-cyan-800">Delete</button>
+            </li>
+            </template>
+            <li></li>
+        </ul>
+    </section>
+    
+</body>
+</html>
