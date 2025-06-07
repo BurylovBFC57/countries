@@ -16,20 +16,20 @@
             console.log(this.countries)
         },
         async addCountry(){
-            id = Date.now()
+            let formData = new FormData($refs.add)
+            console.log(formData.get('flag').name)
+
             let response = await fetch('http://localhost:3000/countries',{
                 method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-type': 'application/json'
-                },
                 body: JSON.stringify({
-                    'name': new FormData($refs.add).get('name'),
-                    'capital': new FormData($refs.add).get('capital')
+                    'name': FormData.get('name'),
+                    'capital': FormData.get('capital'),
+                    'flag': 'images/'+FormData.get('flag').name
                     })
             })
             response = await response.json()
             console.log(response)
+            this.download()
         },
         async deleteCountry(id){
             let response = await fetch(`http://localhost:3000/countries/${id}`,{
@@ -53,23 +53,81 @@
                 <input type="file" name="flag">
                 <button type="submit" class="py-2 px-12 bg-cyan-500 text-white rounded cursor-pointer">AddCountry</button>
             </form>
-        <ul>
-            <li class="grid grid-cols-5">
+        <ul class="grid gap-y-2">
+            <li class="grid grid-cols-[100px_1fr_1fr_1fr]">
                 <h3>Flag</h3>
-                <h3>ID</h3>
                 <h3>Name country</h3>
                 <h3>Capital</h3>
                 <h3>Delete</h3>
             </li>
             <template x-for="country in countries">
-                <li class="grid grid-cols-5">
-                <img x-bind:src="country.img" alt="">  
-                <span x-text="country.id"></span>
-                <span x-text="country.name"></span>
-                <span x-text="country.capital"></span>
-                <button
-                x-on:click="deleteCountry(country.id)"
-                class="bg-cyan-500 py-2 border-2 border-cyan-800">Delete</button>
+                <li class="grid grid-cols-[100px_1fr_fr_fr] items-center bg-cyan-50 p-2 hover:bg-gray-200 cursor-pointer">
+                <img x-bind:src="country.flag" alt="" class="w-full h-full object-cover">
+
+                <div class="grid grid-cols-2"
+                x-data="{
+                    isEdit: false,
+
+                    async save(id){
+                        let response = await fetch(`http://localhost:3000/countries/${id}`,{
+                            method: 'PUT',
+                            body: JSON.stringify({
+                                'name': $refs.name.value,
+                                'capital': this.country.capital,
+                                'flag': this.country.flag
+                            })
+                    })
+                    console.log(response)
+                    this.download()
+                    this.isEdit = !this.isEdit
+                    }
+                }">
+                    <span x-show="!isEdit" x-text="country.name" x-on:dblclick="isEdit = !isEdit"></span>
+                    <input x-show="isEdit" x-ref="name" x-bind:value="country.name" type="text" class="border-b" x-on:outside="save(country.id)">
+                    <!-- <button x-show="!isEdit" class="border" x-on:click="isEdit = !isEdit">Edit</button>
+                    <button x-show="isEdit" class="border" x-on:click="save(country.id)">Save</button> -->
+                </div>
+                <div>
+                    <span x-text="country.capital"></span>
+
+                </div>
+                <div>
+                    <button
+                    x-on:click="deleteCountry(country.id)"
+                    class="bg-cyan-500 py-2 border-2 border-cyan-800 cursor-pointer">Delete</button>
+            
+                </div>
+                <div x-data="{
+                    isMore: false,
+                    cities: [],
+
+                    async downloadCities(id){
+                        this.isMore = this.!isMore
+                        if(this.isMore){
+                            this.citues = [],
+                            let response = await fetch(`http://localhost:3000/cities?country_id==${id}`)
+                            for(city of arr){
+                                if(id == city.country_id){
+                                    this.cities.push(city)
+                                }
+                                
+                            }
+                            this.countries = await response.json()
+                            console.log(this.cities)
+                        }
+                        
+                    }
+                }">
+                    <button
+                    x-on:click="downloadCities(country.id)"
+                    class="bg-cyan-500 py-2 border-2 border-cyan-800 cursor-pointer">More</button>
+                    <ul x-show="isMore">
+                        <template x-for="city in cities">
+                            <li x-text="city.name"></li>
+                        </template>
+                    </ul>
+                </div>
+                
             </li>
             </template>
             <li></li>
